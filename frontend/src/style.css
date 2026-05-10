@@ -1,0 +1,9 @@
+body { margin: 0; font-family: Arial, sans-serif; background: #f4f8fb; }
+.page { max-width: 920px; margin: 24px auto; padding: 0 16px; }
+.card { background: #fff; border-radius: 14px; padding: 16px; margin-bottom: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.05); }
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.form { display: grid; gap: 10px; }
+input, textarea, button { padding: 10px; border-radius: 10px; border: 1px solid #d7dde4; }
+button { background: #2c7be5; color: white; border: none; cursor: pointer; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.error { color: #c0392b; font-weight: bold; }
