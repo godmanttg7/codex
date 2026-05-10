@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:8080/api'
+const BASE_URL = import.meta.env.VITE_API_BASE || '/api'
 
 async function request(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -10,6 +10,7 @@ async function request(path, options = {}) {
   return json.data
 }
 
+export const checkHealth = () => request('/health')
 export const submitFeedback = (payload) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) })
 export const getStats = () => request('/feedback/stats')
 export const getLatest = () => request('/feedback/latest')

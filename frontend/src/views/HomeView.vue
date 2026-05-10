@@ -2,6 +2,10 @@
   <main class="page">
     <h1>智慧公厕管理系统</h1>
     <p v-if="error" class="error">{{ error }}</p>
+    <section class="card">
+      <div>前端端口检测：<b :class="{ warn: frontendPort !== '5173' }">{{ frontendPort }}</b></div>
+      <div>后端连通性：<b :class="{ warn: !backendUp }">{{ backendUp ? '正常' : '异常' }}</b>（服务端口：{{ backendPort }}）</div>
+    </section>
 
     <section class="card stats">
       <div>公厕总数：{{ dashboard.toiletCount }}</div>
@@ -59,17 +63,23 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { createRepair, createToilet, getConsumables, getDashboard, getRepairs, getToilets, updateRepairStatus } from '../api/feedback'
+import { checkHealth, createRepair, createToilet, getConsumables, getDashboard, getRepairs, getToilets, updateRepairStatus } from '../api/feedback'
 
 const dashboard = reactive({ toiletCount: 0, feedbackCount: 0, repairPendingCount: 0, lowStockCount: 0 })
 const toilets = ref([]); const repairs = ref([]); const consumables = ref([])
 const error = ref('')
+const frontendPort = ref(window.location.port || '80')
+const backendPort = ref('-')
+const backendUp = ref(false)
 const toiletForm = reactive({ toiletCode: '', name: '', address: '', district: '', openTime: '' })
 const repairForm = reactive({ toiletId: '', faultDesc: '', reporter: '' })
 
 async function load() {
   error.value = ''
   try {
+    const health = await checkHealth()
+    backendUp.value = health.status === 'UP'
+    backendPort.value = health.serverPort
     Object.assign(dashboard, await getDashboard())
     toilets.value = await getToilets()
     repairs.value = await getRepairs()

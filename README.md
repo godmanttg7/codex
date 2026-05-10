@@ -6,6 +6,7 @@
 - 设施报修工单：创建工单、状态流转（PENDING/REPAIRING/CHECKING/FINISHED）。
 - 耗材预警看板：查看低库存预警。
 - 管理驾驶舱：公厕数、反馈数、待处理工单数、低库存数。
+- 运行检测：前端端口检测（应为5173）+ 后端健康检查（`/api/health`）。
 
 ## 启动步骤
 1. 创建数据库并导入：`mysql -uroot -proot < backend/schema.sql`
@@ -13,7 +14,10 @@
 3. 启动前端：`cd frontend && npm install && npm run dev`
 4. 打开 `http://localhost:5173`
 
+> 前端通过 Vite 代理 `/api` 到 `http://127.0.0.1:8080`，避免跨域和硬编码后端地址。
+
 ## 主要接口
+- `GET /api/health`
 - `POST /api/feedback`
 - `GET /api/feedback/latest`
 - `GET /api/feedback/stats`
