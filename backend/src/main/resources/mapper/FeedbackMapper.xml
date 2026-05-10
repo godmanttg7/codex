@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.toilet.mapper.FeedbackMapper">
+
+    <insert id="insert" parameterType="com.toilet.entity.Feedback" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO toilet_feedback
+        (toilet_name, area, cleanliness_score, queue_score, odor_score, comment, visited_at, created_at)
+        VALUES
+        (#{toiletName}, #{area}, #{cleanlinessScore}, #{queueScore}, #{odorScore}, #{comment}, #{visitedAt}, NOW())
+    </insert>
+
+    <select id="listLatest" resultType="com.toilet.entity.Feedback">
+        SELECT id,
+               toilet_name AS toiletName,
+               area,
+               cleanliness_score AS cleanlinessScore,
+               queue_score AS queueScore,
+               odor_score AS odorScore,
+               comment,
+               visited_at AS visitedAt,
+               created_at AS createdAt
+        FROM toilet_feedback
+        ORDER BY created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="getStats" resultType="com.toilet.dto.StatsResponse">
+        SELECT COUNT(*) AS totalCount,
+               ROUND(AVG(cleanliness_score), 2) AS avgCleanliness,
+               ROUND(AVG(queue_score), 2) AS avgQueue,
+               ROUND(AVG(odor_score), 2) AS avgOdor
+        FROM toilet_feedback
+    </select>
+</mapper>
