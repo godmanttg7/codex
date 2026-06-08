@@ -8,8 +8,11 @@ import lombok.Data;
 public class RepairOrderCreateRequest {
     @NotNull
     private Long toiletId;
+    private Long facilityId;
     @NotBlank
     private String faultDesc;
     @NotBlank
     private String reporter;
+    private String reporterName;
+    private String assigneeName;
 }

@@ -5,17 +5,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class RepairOrder {
+public class Facility {
     private Long id;
-    private String orderNo;
     private Long toiletId;
     private String toiletName;
-    private Long facilityId;
     private String facilityName;
-    private String faultDesc;
-    private String reporter;
-    private String reporterName;
-    private String assigneeName;
+    private String facilityType;
     private String status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

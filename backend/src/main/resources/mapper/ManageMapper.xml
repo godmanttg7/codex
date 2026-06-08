@@ -2,41 +2,140 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.toilet.mapper.ManageMapper">
     <select id="listToilets" resultType="com.toilet.entity.Toilet">
-        SELECT id,toilet_code AS toiletCode,name,address,district,open_time AS openTime,created_at AS createdAt
-        FROM tb_toilet ORDER BY id DESC
+        SELECT id,
+               toilet_code AS toiletCode,
+               name,
+               address,
+               district,
+               open_time AS openTime,
+               created_at AS createdAt
+        FROM tb_toilet
+        ORDER BY id DESC
     </select>
 
     <insert id="insertToilet" parameterType="com.toilet.entity.Toilet" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tb_toilet (toilet_code,name,address,district,open_time,created_at)
-        VALUES (#{toiletCode},#{name},#{address},#{district},#{openTime},NOW())
+        INSERT INTO tb_toilet (toilet_code, name, address, district, open_time, created_at)
+        VALUES (#{toiletCode}, #{name}, #{address}, #{district}, #{openTime}, SYSDATE)
     </insert>
 
+    <select id="listFacilities" resultType="com.toilet.entity.Facility">
+        SELECT f.id,
+               f.toilet_id AS toiletId,
+               t.name AS toiletName,
+               f.facility_name AS facilityName,
+               f.facility_type AS facilityType,
+               f.status,
+               f.created_at AS createdAt,
+               f.updated_at AS updatedAt
+        FROM tb_facility f
+        JOIN tb_toilet t ON t.id = f.toilet_id
+        ORDER BY f.id DESC
+    </select>
+
+    <select id="getFacilityById" resultType="com.toilet.entity.Facility">
+        SELECT id,
+               toilet_id AS toiletId,
+               facility_name AS facilityName,
+               facility_type AS facilityType,
+               status,
+               created_at AS createdAt,
+               updated_at AS updatedAt
+        FROM tb_facility
+        WHERE id = #{id}
+    </select>
+
     <select id="listRepairs" resultType="com.toilet.entity.RepairOrder">
-        SELECT r.id,r.toilet_id AS toiletId,t.name AS toiletName,r.fault_desc AS faultDesc,r.reporter,r.status,r.created_at AS createdAt
-        FROM tb_repair_order r JOIN tb_toilet t ON t.id=r.toilet_id ORDER BY r.id DESC
+        SELECT r.id,
+               r.order_no AS orderNo,
+               r.toilet_id AS toiletId,
+               t.name AS toiletName,
+               r.facility_id AS facilityId,
+               f.facility_name AS facilityName,
+               r.fault_desc AS faultDesc,
+               r.reporter,
+               r.reporter_name AS reporterName,
+               r.assignee_name AS assigneeName,
+               r.status,
+               r.created_at AS createdAt
+        FROM tb_repair_order r
+        JOIN tb_toilet t ON t.id = r.toilet_id
+        LEFT JOIN tb_facility f ON f.id = r.facility_id
+        ORDER BY r.id DESC
+    </select>
+
+    <select id="getRepairById" resultType="com.toilet.entity.RepairOrder">
+        SELECT id,
+               order_no AS orderNo,
+               toilet_id AS toiletId,
+               facility_id AS facilityId,
+               fault_desc AS faultDesc,
+               reporter,
+               reporter_name AS reporterName,
+               assignee_name AS assigneeName,
+               status,
+               created_at AS createdAt
+        FROM tb_repair_order
+        WHERE id = #{id}
     </select>
 
     <insert id="insertRepair" parameterType="com.toilet.entity.RepairOrder" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO tb_repair_order (toilet_id,fault_desc,reporter,status,created_at)
-        VALUES (#{toiletId},#{faultDesc},#{reporter},#{status},NOW())
+        INSERT INTO tb_repair_order
+        (order_no, toilet_id, facility_id, fault_desc, reporter, reporter_name, assignee_name, status, created_at)
+        VALUES
+        (#{orderNo}, #{toiletId}, #{facilityId}, #{faultDesc}, #{reporter}, #{reporterName}, #{assigneeName}, #{status}, SYSDATE)
     </insert>
 
     <update id="updateRepairStatus">
-        UPDATE tb_repair_order SET status=#{status} WHERE id=#{id}
+        UPDATE tb_repair_order
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteRepair">
+        DELETE FROM tb_repair_order WHERE id = #{id}
+    </delete>
+
+    <update id="updateFacilityStatus">
+        UPDATE tb_facility
+        SET status = #{status}, updated_at = SYSDATE
+        WHERE id = #{id}
     </update>
 
     <select id="listConsumables" resultType="com.toilet.entity.ConsumableStock">
-        SELECT c.id,c.toilet_id AS toiletId,t.name AS toiletName,c.consumable_name AS consumableName,
-               c.current_stock AS currentStock,c.min_stock AS minStock,
-               (CASE WHEN c.current_stock &lt; c.min_stock THEN TRUE ELSE FALSE END) AS lowStock
-        FROM tb_consumable_stock c JOIN tb_toilet t ON t.id=c.toilet_id ORDER BY c.id DESC
+        SELECT c.id,
+               c.toilet_id AS toiletId,
+               t.name AS toiletName,
+               c.consumable_name AS consumableName,
+               c.current_stock AS currentStock,
+               c.min_stock AS minStock,
+               CASE WHEN c.current_stock &lt; c.min_stock THEN 1 ELSE 0 END AS lowStock
+        FROM tb_consumable_stock c
+        JOIN tb_toilet t ON t.id = c.toilet_id
+        ORDER BY c.id DESC
     </select>
+
+    <select id="listMessages" resultType="com.toilet.entity.Message">
+        SELECT id,
+               receiver_name AS receiverName,
+               title,
+               content,
+               read_flag AS readFlag,
+               create_time AS createTime,
+               update_time AS updateTime
+        FROM tb_message
+        ORDER BY id DESC
+    </select>
+
+    <insert id="insertMessage" parameterType="com.toilet.entity.Message" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tb_message (receiver_name, title, content, read_flag, create_time, update_time)
+        VALUES (#{receiverName}, #{title}, #{content}, 0, SYSDATE, SYSDATE)
+    </insert>
 
     <select id="dashboard" resultType="com.toilet.dto.DashboardResponse">
         SELECT
           (SELECT COUNT(*) FROM tb_toilet) AS toiletCount,
           (SELECT COUNT(*) FROM toilet_feedback) AS feedbackCount,
-          (SELECT COUNT(*) FROM tb_repair_order WHERE status != 'FINISHED') AS repairPendingCount,
+          (SELECT COUNT(*) FROM tb_repair_order WHERE status NOT IN ('FINISHED', 'CANCELED')) AS repairPendingCount,
           (SELECT COUNT(*) FROM tb_consumable_stock WHERE current_stock &lt; min_stock) AS lowStockCount
     </select>
 </mapper>

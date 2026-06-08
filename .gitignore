@@ -9,3 +9,13 @@ frontend/dist/
 .idea/
 .vscode/
 *.iml
+
+# personal agent configs and temporary database scripts
+.claude/
+fix_*.sql
+backup.sql
+clear_data.sql
+update_password.sql
+
+node_modules/
+toilet-server/node_modules/
