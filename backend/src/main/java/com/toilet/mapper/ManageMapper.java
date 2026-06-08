@@ -21,8 +21,9 @@ public interface ManageMapper {
     RepairOrder getRepairById(Long id);
     void insertRepair(RepairOrder repairOrder);
     void updateRepairStatus(@Param("id") Long id, @Param("status") String status);
+    void updateRepairAssignee(@Param("id") Long id, @Param("assigneeName") String assigneeName);
     void deleteRepair(Long id);
-    void updateFacilityStatus(@Param("id") Long id, @Param("status") String status);
+    void recomputeFacilityStatus(@Param("facilityId") Long facilityId);
     List<ConsumableStock> listConsumables();
     List<Message> listMessages();
     void insertMessage(Message message);

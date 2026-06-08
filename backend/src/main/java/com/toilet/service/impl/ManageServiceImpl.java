@@ -66,37 +66,49 @@ public class ManageServiceImpl implements ManageService {
         order.setAssigneeName(defaultText(request.getAssigneeName(), "维修人员"));
         order.setStatus("PENDING");
         manageMapper.insertRepair(order);
-        if (request.getFacilityId() != null) {
-            manageMapper.updateFacilityStatus(request.getFacilityId(), "FAULT");
-        }
+        recomputeFacilityStatus(order.getFacilityId());
         sendMessage(order.getAssigneeName(), "新维修工单", "工单" + order.getOrderNo() + "已创建，请及时处理。故障：" + order.getFaultDesc());
     }
 
     @Transactional
-    public void updateRepairStatus(Long id, String status) {
+    public void assignOrder(Long id, String assigneeName) {
+        RepairOrder existing = requireOrder(id);
+        String safeAssignee = defaultText(assigneeName, "维修人员");
+        manageMapper.updateRepairAssignee(id, safeAssignee);
+        manageMapper.updateRepairStatus(id, "REPAIRING");
+        recomputeFacilityStatus(existing.getFacilityId());
+        sendMessage(safeAssignee, "维修工单已指派", "工单" + existing.getOrderNo() + "已指派给你，并进入维修中。 ");
+    }
+
+    @Transactional
+    public void updateStatus(Long id, String status) {
         if (!ALLOWED.contains(status)) {
             throw new IllegalArgumentException("非法状态");
         }
-        RepairOrder existing = manageMapper.getRepairById(id);
-        if (existing == null) {
-            throw new IllegalArgumentException("工单不存在");
-        }
+        RepairOrder existing = requireOrder(id);
         manageMapper.updateRepairStatus(id, status);
-        syncFacilityByOrderStatus(existing, status);
+        recomputeFacilityStatus(existing.getFacilityId());
         notifyRepairStatus(existing, status);
     }
 
     @Transactional
-    public void deleteRepair(Long id) {
+    public void cancelOrder(Long id) {
+        RepairOrder existing = requireOrder(id);
+        manageMapper.updateRepairStatus(id, "CANCELED");
+        recomputeFacilityStatus(existing.getFacilityId());
+        sendMessage(existing.getReporterName(), "维修工单已取消", "工单" + existing.getOrderNo() + "已取消，设施状态已按剩余工单重新计算。 ");
+    }
+
+    @Transactional
+    public void deleteOrder(Long id) {
         RepairOrder existing = manageMapper.getRepairById(id);
         if (existing == null) {
             return;
         }
+        Long facilityId = existing.getFacilityId();
         manageMapper.deleteRepair(id);
-        if (existing.getFacilityId() != null) {
-            manageMapper.updateFacilityStatus(existing.getFacilityId(), "NORMAL");
-        }
-        sendMessage(existing.getReporterName(), "维修工单已取消", "工单" + existing.getOrderNo() + "已删除，关联设施已恢复为正常状态。 ");
+        recomputeFacilityStatus(facilityId);
+        sendMessage(existing.getReporterName(), "维修工单已删除", "工单" + existing.getOrderNo() + "已删除，设施状态已按剩余工单重新计算。 ");
     }
 
     public List<ConsumableStock> listConsumables() {
@@ -107,23 +119,22 @@ public class ManageServiceImpl implements ManageService {
         return manageMapper.listMessages();
     }
 
+    private RepairOrder requireOrder(Long id) {
+        RepairOrder existing = manageMapper.getRepairById(id);
+        if (existing == null) {
+            throw new IllegalArgumentException("工单不存在");
+        }
+        return existing;
+    }
+
     private String generateOrderNo() {
         return "RO" + LocalDateTime.now().format(ORDER_NO_TIME_FORMAT) + (System.nanoTime() % 10000);
     }
 
-    private void syncFacilityByOrderStatus(RepairOrder order, String status) {
-        if (order.getFacilityId() == null) {
-            return;
+    private void recomputeFacilityStatus(Long facilityId) {
+        if (facilityId != null) {
+            manageMapper.recomputeFacilityStatus(facilityId);
         }
-        if ("FINISHED".equals(status) || "CANCELED".equals(status)) {
-            manageMapper.updateFacilityStatus(order.getFacilityId(), "NORMAL");
-            return;
-        }
-        if ("REPAIRING".equals(status) || "CHECKING".equals(status)) {
-            manageMapper.updateFacilityStatus(order.getFacilityId(), "REPAIR");
-            return;
-        }
-        manageMapper.updateFacilityStatus(order.getFacilityId(), "FAULT");
     }
 
     private void notifyRepairStatus(RepairOrder order, String status) {
@@ -137,11 +148,11 @@ public class ManageServiceImpl implements ManageService {
             return;
         }
         if ("FINISHED".equals(status)) {
-            sendMessage(order.getReporterName(), title, "工单" + order.getOrderNo() + "已验收通过，设施状态已恢复正常。 ");
+            sendMessage(order.getReporterName(), title, "工单" + order.getOrderNo() + "已验收通过，设施状态已按剩余工单重新计算。 ");
             return;
         }
         if ("CANCELED".equals(status)) {
-            sendMessage(order.getReporterName(), title, "工单" + order.getOrderNo() + "已取消，设施状态已恢复正常。 ");
+            sendMessage(order.getReporterName(), title, "工单" + order.getOrderNo() + "已取消，设施状态已按剩余工单重新计算。 ");
             return;
         }
         sendMessage(order.getAssigneeName(), title, "工单" + order.getOrderNo() + "状态已更新为" + status + "。 ");

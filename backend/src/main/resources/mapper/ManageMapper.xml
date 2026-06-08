@@ -91,14 +91,33 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updateRepairAssignee">
+        UPDATE tb_repair_order
+        SET assignee_name = #{assigneeName}
+        WHERE id = #{id}
+    </update>
+
     <delete id="deleteRepair">
         DELETE FROM tb_repair_order WHERE id = #{id}
     </delete>
 
-    <update id="updateFacilityStatus">
+    <update id="recomputeFacilityStatus">
         UPDATE tb_facility
-        SET status = #{status}, updated_at = SYSDATE
-        WHERE id = #{id}
+        SET status = CASE
+            WHEN EXISTS (
+                SELECT 1 FROM tb_repair_order
+                WHERE facility_id = #{facilityId}
+                  AND status IN ('REPAIRING', 'CHECKING')
+            ) THEN 'REPAIR'
+            WHEN EXISTS (
+                SELECT 1 FROM tb_repair_order
+                WHERE facility_id = #{facilityId}
+                  AND status = 'PENDING'
+            ) THEN 'FAULT'
+            ELSE 'NORMAL'
+        END,
+        updated_at = SYSDATE
+        WHERE id = #{facilityId}
     </update>
 
     <select id="listConsumables" resultType="com.toilet.entity.ConsumableStock">

@@ -2,6 +2,7 @@ package com.toilet.controller;
 
 import com.toilet.dto.ApiResponse;
 import com.toilet.dto.DashboardResponse;
+import com.toilet.dto.RepairOrderAssignRequest;
 import com.toilet.dto.RepairOrderCreateRequest;
 import com.toilet.dto.RepairOrderStatusRequest;
 import com.toilet.dto.ToiletCreateRequest;
@@ -58,15 +59,27 @@ public class ManageController {
         return ApiResponse.ok(null);
     }
 
+    @PatchMapping("/repairs/{id}/assign")
+    public ApiResponse<Void> assignOrder(@PathVariable Long id, @Valid @RequestBody RepairOrderAssignRequest request) {
+        manageService.assignOrder(id, request.getAssigneeName());
+        return ApiResponse.ok(null);
+    }
+
     @PatchMapping("/repairs/{id}/status")
-    public ApiResponse<Void> updateRepairStatus(@PathVariable Long id, @Valid @RequestBody RepairOrderStatusRequest request) {
-        manageService.updateRepairStatus(id, request.getStatus());
+    public ApiResponse<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody RepairOrderStatusRequest request) {
+        manageService.updateStatus(id, request.getStatus());
+        return ApiResponse.ok(null);
+    }
+
+    @PatchMapping("/repairs/{id}/cancel")
+    public ApiResponse<Void> cancelOrder(@PathVariable Long id) {
+        manageService.cancelOrder(id);
         return ApiResponse.ok(null);
     }
 
     @DeleteMapping("/repairs/{id}")
-    public ApiResponse<Void> deleteRepair(@PathVariable Long id) {
-        manageService.deleteRepair(id);
+    public ApiResponse<Void> deleteOrder(@PathVariable Long id) {
+        manageService.deleteOrder(id);
         return ApiResponse.ok(null);
     }
 

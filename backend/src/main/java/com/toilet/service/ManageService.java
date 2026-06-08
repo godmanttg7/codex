@@ -18,8 +18,10 @@ public interface ManageService {
     List<Facility> listFacilities();
     List<RepairOrder> listRepairs();
     void createRepair(RepairOrderCreateRequest request);
-    void updateRepairStatus(Long id, String status);
-    void deleteRepair(Long id);
+    void assignOrder(Long id, String assigneeName);
+    void updateStatus(Long id, String status);
+    void cancelOrder(Long id);
+    void deleteOrder(Long id);
     List<ConsumableStock> listConsumables();
     List<Message> listMessages();
 }

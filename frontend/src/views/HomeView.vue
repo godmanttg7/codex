@@ -61,6 +61,8 @@
           <select :value="r.status" @change="onUpdateStatus(r.id, $event.target.value)">
             <option>PENDING</option><option>REPAIRING</option><option>CHECKING</option><option>FINISHED</option><option>CANCELED</option>
           </select>
+          <button class="secondary" @click="onAssignRepair(r.id, r.assigneeName || repairForm.assigneeName || '维修人员')">指派</button>
+          <button class="secondary" @click="onCancelRepair(r.id)">取消</button>
           <button class="secondary" @click="onDeleteRepair(r.id)">删除</button>
         </li>
       </ul>
@@ -90,7 +92,7 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
-import { checkHealth, createRepair, createToilet, deleteRepair, getConsumables, getDashboard, getFacilities, getMessages, getRepairs, getToilets, updateRepairStatus } from '../api/feedback'
+import { assignRepair, cancelRepair, checkHealth, createRepair, createToilet, deleteRepair, getConsumables, getDashboard, getFacilities, getMessages, getRepairs, getToilets, updateRepairStatus } from '../api/feedback'
 
 const dashboard = reactive({ toiletCount: 0, feedbackCount: 0, repairPendingCount: 0, lowStockCount: 0 })
 const toilets = ref([])
@@ -134,7 +136,9 @@ async function run(action) {
 }
 async function onCreateToilet() { await run(() => createToilet({ ...toiletForm })) }
 async function onCreateRepair() { await run(() => createRepair({ ...repairForm, facilityId: repairForm.facilityId || null })) }
+async function onAssignRepair(id, assigneeName) { await run(() => assignRepair(id, assigneeName)) }
 async function onUpdateStatus(id, status) { await run(() => updateRepairStatus(id, status)) }
+async function onCancelRepair(id) { await run(() => cancelRepair(id)) }
 async function onDeleteRepair(id) { await run(() => deleteRepair(id)) }
 
 onMounted(refresh)
